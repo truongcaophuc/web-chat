@@ -117,7 +117,7 @@ const slice = createSlice({
       state.group_chat.conversations = list;
     },
     updateDirectConversation(state, action) {
-      const { conversation, msg, room_id,type } = action.payload;
+      const { conversation, msg, room_id, type } = action.payload;
       const this_conversation_id = conversation || room_id;
       state.direct_chat.conversations.forEach((conversation) => {
         if (conversation.id === this_conversation_id) {
@@ -125,7 +125,10 @@ const slice = createSlice({
             conversation.time = `Vài giây`;
           }
           if (msg) conversation.msg = msg.text;
-          if (room_id && this_conversation_id === room_id||type==="Share") {
+          if (
+            (room_id && this_conversation_id === room_id) ||
+            type === "Share"
+          ) {
             conversation.unread = 0;
           } else conversation.unread += 1;
         }
@@ -197,6 +200,7 @@ const slice = createSlice({
             incoming: el.to === user_id,
             outgoing: el.from === user_id,
             created_at: el.created_at,
+            pinned: el.isPin,
           };
         else if (el.type == "Reply")
           return {
@@ -207,7 +211,8 @@ const slice = createSlice({
             incoming: el.to === user_id,
             outgoing: el.from === user_id,
             created_at: el.created_at,
-            replyTo:el.replyTo
+            replyTo: el.replyTo,
+            pinned: el.isPin,
           };
         else
           return {
@@ -220,6 +225,7 @@ const slice = createSlice({
             incoming: el.to === user_id,
             outgoing: el.from === user_id,
             created_at: el.created_at,
+            pinned: el.isPin,
           };
       });
       state.direct_chat.current_messages = formatted_messages;
@@ -235,6 +241,8 @@ const slice = createSlice({
         incoming: el.from._id !== user_id,
         outgoing: el.from._id === user_id,
         from: el.from.firstName + " " + el.from.lastName,
+        created_at: el.created_at,
+        pinned: el.isPin,
       }));
       state.group_chat.current_messages = formatted_messages;
     },
@@ -260,6 +268,14 @@ const slice = createSlice({
           } else if (type === "Message sent") {
             conversation.isSeen = false;
           }
+        }
+      });
+    },
+    updateMessagePin(state, action) {
+      const { message_id } = action.payload;
+      state.direct_chat.current_messages.forEach((message) => {
+        if (message.id === message_id) {
+          message.pinned = !message.pinned;
         }
       });
     },
@@ -308,7 +324,7 @@ const slice = createSlice({
     },
   },
 });
-export const { leaveGroup, addMember } = slice.actions;
+export const { leaveGroup, addMember, updateMessagePin } = slice.actions;
 // Reducer
 export default slice.reducer;
 
@@ -342,11 +358,16 @@ export const AddGroupConversation = ({ group }) => {
     dispatch(slice.actions.addGroupConversation({ group }));
   };
 };
-export const UpdateDirectConversation = ({ conversation, msg,type }) => {
+export const UpdateDirectConversation = ({ conversation, msg, type }) => {
   return async (dispatch, getState) => {
     const room_id = getState().app.room_id; // In ra state để kiểm tra hoặc sử dụng trong logic
     dispatch(
-      slice.actions.updateDirectConversation({ conversation, msg, room_id,type })
+      slice.actions.updateDirectConversation({
+        conversation,
+        msg,
+        room_id,
+        type,
+      })
     );
   };
 };
