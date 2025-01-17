@@ -9,8 +9,9 @@ import {
   IconButton,
   Divider,
   Modal,
+  Alert,
 } from "@mui/material";
-import { LinkPreview } from "@dhaiwat10/react-link-preview";
+import { ToastContainer, toast } from "react-toastify";
 import Microlink from "@microlink/react";
 import Avatar from "react-avatar";
 import { useTheme, alpha } from "@mui/material/styles";
@@ -26,7 +27,15 @@ import {
 import { Link } from "react-router-dom";
 import { SocialMediaEmbed } from "react-social-media-embed";
 import { useDispatch, useSelector } from "react-redux";
+import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
+import PushPinIcon from "@mui/icons-material/PushPin";
+import { updateMessagePin } from "../../redux/slices/conversation";
+import { socket } from "../../socket";
 const MessageOption = ({ method, data }) => {
+  const dispatch = useDispatch();
+  const { current_messages,current_conversation } = useSelector(
+    (state) => state.conversation.direct_chat
+  );
   const { handleReply, handleOpen, setMessageShare } = method;
   const Message_options = [
     {
@@ -42,6 +51,26 @@ const MessageOption = ({ method, data }) => {
       click: () => {
         setMessageShare(data);
         handleOpen();
+      },
+    },
+    {
+      title: data?.pinned ? "Bỏ ghim" : "Ghim tin nhắn",
+      icon: data?.pinned ? (
+        <PushPinIcon style={{ fontSize: "16px" }}></PushPinIcon>
+      ) : (
+        <PushPinOutlinedIcon style={{ fontSize: "16px" }}></PushPinOutlinedIcon>
+      ),
+      click: () => {
+        const MAX_PINNED_MESSAGES = 3; // Số tin nhắn có thể ghim tối đa
+        const pinnedCount = current_messages.filter((msg) => msg.pinned).length;
+        if (pinnedCount < MAX_PINNED_MESSAGES) {
+          socket.emit("pin_message",{message_id:data.id,conversation_id:current_conversation.id})
+          dispatch(updateMessagePin({ message_id: data.id }));
+        } else {
+          toast.warning("Chỉ có thêm ghim tối đa 3 tin nhắn", {
+            autoClose: 2000,
+          });
+        }
       },
     },
   ];
@@ -107,12 +136,11 @@ const formatFileSize = (size) => {
   }
   return `${size.toFixed(2)} ${units[unitIndex]}`;
 };
-const TextMsg = ({ el, menu, messageRefs, index, method }) => {
+const TextMsg = ({ el, menu, messageRefs, method }) => {
   const theme = useTheme();
   const { current_conversation, conversations } = useSelector(
     (state) => state.conversation.direct_chat
   );
-  const { chat_type } = useSelector((state) => state.app);
   const { current_messages } = useSelector(
     (state) => state.conversation.direct_chat
   );
@@ -155,7 +183,7 @@ const TextMsg = ({ el, menu, messageRefs, index, method }) => {
           <Typography
             variant="body2"
             color={el.incoming ? theme.palette.text : "#fff"}
-            ref={(el) => (messageRefs.current[index] = el)}
+            ref={(el) => (messageRefs.current[index_message] = el)}
           >
             {el.message}
           </Typography>
@@ -168,7 +196,11 @@ const TextMsg = ({ el, menu, messageRefs, index, method }) => {
     </Stack>
   );
 };
-const MediaMsg = ({ el, menu, method }) => {
+const MediaMsg = ({ el, menu, method, messageRefs }) => {
+  const { current_messages } = useSelector(
+    (state) => state.conversation.direct_chat
+  );
+  const index_message = current_messages.indexOf(el);
   const [open, setOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const theme = useTheme();
@@ -248,6 +280,7 @@ const MediaMsg = ({ el, menu, method }) => {
               <Typography
                 variant="body2"
                 color={el.incoming ? theme.palette.text : "#fff"}
+                ref={(el) => (messageRefs.current[index_message] = el)}
               >
                 {el.fileName}
               </Typography>
@@ -320,8 +353,12 @@ const DocMsg = ({ el, menu, method }) => {
     </Stack>
   );
 };
-const LinkMsg = ({ el, menu, method }) => {
+const LinkMsg = ({ el, menu, method, messageRefs }) => {
+  const { current_messages } = useSelector(
+    (state) => state.conversation.direct_chat
+  );
   const theme = useTheme();
+  const index_message = current_messages.indexOf(el);
   return (
     <Stack direction="row" justifyContent={el.incoming ? "start" : "end"}>
       <Box
@@ -347,6 +384,7 @@ const LinkMsg = ({ el, menu, method }) => {
                   textDecoration: "none",
                 },
               }}
+              ref={(el) => (messageRefs.current[index_message] = el)}
             >
               <div dangerouslySetInnerHTML={{ __html: el.message }}></div>
             </Typography>
@@ -361,8 +399,19 @@ const LinkMsg = ({ el, menu, method }) => {
     </Stack>
   );
 };
-const ReplyMsg = ({ el, menu, method }) => {
+const ReplyMsg = ({ el, menu, method, messageRefs }) => {
   const theme = useTheme();
+  const { current_messages } = useSelector(
+    (state) => state.conversation.direct_chat
+  );
+  let reply_message_index = 0;
+  current_messages.find((message, index) => {
+    if (message.id === el.replyTo?.id) {
+      reply_message_index = index;
+    }
+    return message._id === el.replyTo?.id;
+  });
+  const index_message = current_messages.indexOf(el);
   return (
     <Stack direction="row" justifyContent={el.incoming ? "start" : "end"}>
       <Box
@@ -386,6 +435,15 @@ const ReplyMsg = ({ el, menu, method }) => {
               backgroundColor: "#ededed",
               height: "70px",
             }}
+            onClick={() => {
+              const targetMessage = messageRefs.current[reply_message_index];
+              if (targetMessage) {
+                targetMessage.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
+              }
+            }}
           >
             <Divider
               orientation="vertical"
@@ -406,6 +464,7 @@ const ReplyMsg = ({ el, menu, method }) => {
             <Typography
               variant="body2"
               color={el.incoming ? theme.palette.text : "#fff"}
+              ref={(el) => (messageRefs.current[index_message] = el)}
             >
               {el.message}
             </Typography>

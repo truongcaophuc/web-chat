@@ -14,7 +14,6 @@ import { DotsThreeVertical, DownloadSimple, Image } from "phosphor-react";
 import { Message_options } from "../../data";
 import { Link } from "react-router-dom";
 import truncateString from "../../utils/truncate";
-import { LinkPreview } from "@dhaiwat10/react-link-preview";
 import { SocialMediaEmbed } from "react-social-media-embed";
 import { useDispatch, useSelector } from "react-redux";
 const MessageOption = () => {
