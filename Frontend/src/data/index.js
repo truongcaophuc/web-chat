@@ -199,10 +199,20 @@ const Chat_History = [
   },
 ];
 
+const Message_options = [
+  {
+    title: "Trả lời",
+  },
+  {
+    title: "Chia sẻ",
+  },
+];
+
 export {
   Profile_Menu,
   Nav_Buttons,
   Nav_Setting,
   ChatList,
   Chat_History,
+  Message_options,
 };
