@@ -24,6 +24,30 @@ const Profile_Menu = [
   },
 ];
 
+const Nav_Buttons = [
+  {
+    index: 0,
+    icon: <ChatCircleDots />,
+  },
+  {
+    index: 1,
+    icon: <Users />,
+  },
+  {
+    index: 2,
+    icon: <Phone />,
+  },
+];
+
+const Nav_Setting = [
+  {
+    index: 3,
+    icon: <GearSix />,
+  },
+];
+
 export {
   Profile_Menu,
+  Nav_Buttons,
+  Nav_Setting,
 };
