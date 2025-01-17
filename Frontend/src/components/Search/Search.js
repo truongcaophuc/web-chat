@@ -7,6 +7,9 @@ const Search = styled("div")(({ theme }) => ({
   marginRight: theme.spacing(2),
   marginLeft: 0,
   width: "100%",
+  borderWidth:"1px",
+  borderColor:"#709CE6",
+  borderStyle: "solid",
 }));
 
 export default Search;
