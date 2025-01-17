@@ -28,6 +28,7 @@ import { useTheme } from "@mui/material/styles";
 import { SimpleBarStyle } from "../../components/Scrollbar";
 import { format, parseISO } from "date-fns";
 import { ChatHeader, ChatFooter } from "../../components/Chat";
+import PinMessage from "../../components/PinMessage";
 import useResponsive from "../../hooks/useResponsive";
 import { Chat_History } from "../../data";
 import {
@@ -48,6 +49,9 @@ import {
   UpdateMessageStatus,
 } from "../../redux/slices/conversation";
 import { socket } from "../../socket";
+
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 function linkify(text) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   return text.replace(
@@ -93,6 +97,7 @@ const Conversation = ({ isMobile, menu, messageRefs, method }) => {
   return (
     current_conversation && (
       <Box p={isMobile ? 1 : 3}>
+        <ToastContainer />
         <Stack spacing={3}>
           {Object.keys(groupedMessages).map((date) => (
             <div>
@@ -272,6 +277,7 @@ const ChatComponent = ({ messageRefs, setShowSearchBar }) => {
       height={"100%"}
       maxHeight={"100vh"}
       width={isMobile ? "100vw" : "auto"}
+      style={{ position: "relative" }}
     >
       {/*  */}
       <ChatHeader setShowSearchBar={setShowSearchBar} />
@@ -288,6 +294,7 @@ const ChatComponent = ({ messageRefs, setShowSearchBar }) => {
               : theme.palette.background,
 
           boxShadow: "0px 0px 2px rgba(0, 0, 0, 0.25)",
+          alignItems: "center",
         }}
       >
         <SimpleBarStyle timeout={500} clickOnTrack={false}>
@@ -298,6 +305,7 @@ const ChatComponent = ({ messageRefs, setShowSearchBar }) => {
             method={{ replyTo, handleReply, handleOpen, setMessageShare }}
           />
         </SimpleBarStyle>
+        <PinMessage messageRefs={messageRefs}></PinMessage>
       </Box>
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Chia sẻ</DialogTitle>

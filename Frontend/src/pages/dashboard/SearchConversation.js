@@ -44,11 +44,12 @@ const SearchConversation = ({ messageRefs, setShowSearchBar }) => {
       return 1;
     }
     const results = current_messages
-      ?.map((msg, index) =>
-        msg.message.toLowerCase().includes(searchText.toLowerCase())
-          ? { ...msg, index }
-          : null
-      )
+      ?.map((msg, index) => {
+        if (msg.message)
+          return msg.message.toLowerCase().includes(searchText.toLowerCase())
+            ? { ...msg, index }
+            : null;
+      })
       .filter(Boolean);
     console.log("kết quả lọc", results);
     setSearchResults(results);
@@ -109,9 +110,11 @@ const SearchConversation = ({ messageRefs, setShowSearchBar }) => {
               size={40}
               round={true}
             />
-            <Stack style={{flex:1}}>
-            <Typography>{msg.incoming ? current_conversation?.name : userName}</Typography>
-            <Typography>{truncateText(msg.message, 20)}</Typography>
+            <Stack style={{ flex: 1 }}>
+              <Typography>
+                {msg.incoming ? current_conversation?.name : userName}
+              </Typography>
+              <Typography>{truncateText(msg.message, 20)}</Typography>
             </Stack>
             <Typography>{current_conversation?.time}</Typography>
           </Stack>
